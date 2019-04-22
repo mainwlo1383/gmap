@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Attractions</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container text-center row ml-5 ">
+
+        <div class="col-10 ">
+            <h1 class="mb-5">新竹景點規劃</h1>
+
+            <div id="map" style="width:850px;height:600px"></div>
+        </div>
+        <div class="col-2 mt-5 text-left">
+            <h5 class="mb-3 mt-5">旅館: </h5>
+            <select class="mb-4" id="start" onchange="calcRoute();" size="4" multiple style="width:250px;"></select>
+
+            <h5 class="mb-3">景點:</h5>
+            <select id="end" onchange="calcRoute();" size="16" multiple style="width:250px;"></select>
+
+            <button id="btn" type="button" class="mt-3 btn-secondary" style="width:250px;height: 40px;">景點規劃</button>
+        </div>
+    </div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8_leVd8LRKxvNf0wUTOpr8J8PP6P5GTI"></script>
+<script>
+    $(function() {
+        // 載入路線服務與路線顯示圖層
+        var directionsService = new google.maps.DirectionsService();
+        var directionsDisplay = new google.maps.DirectionsRenderer();
+        var map;
+        var location = {
+            lat: 24.8016170,
+            lng: 120.971574
+        };
+        var marker = null;
+        // 初始化地圖
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: location,
+            zoom: 15
+        });
+
+        directionsDisplay.setMap(map);
+        $("#btn").click(function() {
+            intomap(directionsService, directionsDisplay);
+
+        });
+    });
+
+    function intomap(directionsService, directionsDisplay) {
+
+        var waypoints = [];
+        var end_Array = document.getElementById('end');
+        for (var i = 0; i < end_Array.length; i++) {
+            if (end_Array.options[i].selected) {
+                waypoints.push({
+                    location: end_Array[i].value,
+                    stopover: true
+                });
+            }
+        }
+        var start_Array = document.getElementById('start');
+        for (var i = 0; i < start_Array.length; i++) {
+            if (start_Array.options[i].selected) {
+                waypoints.push({
+                    location: start_Array[i].value,
+                    stopover: true
+                });
+            }
+        }
+        directionsService.route({
+            origin: document.getElementById('start').value,
+            destination: document.getElementById('end').value,
+            waypoints: waypoints,
+            optimizeWaypoints: true,
+            travelMode: 'DRIVING'
+        }, function(response, status) {
+            if (status === 'OK') {
+                directionsDisplay.setDirections(response);
+            } else {
+                window.alert('Directions request failed due to ' + status);
+            }
+        });
+
+        $.ajax({
+            url: "http://opendata.hccg.gov.tw/dataset/39ee314b-7ce7-4265-a6b5-b57f42392da8/resource/6a3a5f61-5383-419d-a94c-df710071a51e/download/20180321131425502.json",
+            type: "GET",
+        }).done(function(data) {
+            for (var item of data) {
+                var marker = new google.maps.Marker({
+                    position: {
+                        lat: parseFloat(item.緯度),
+                        lng: parseFloat(item.經度)
+                    },
+                    map: map,
+                    icon: "http://icons.iconarchive.com/icons/archigraphs/christmas/32/Little-House-icon.png",
+                    title: item.旅館名稱
+                });
+                /* var product =  */
+                $("<option></option>")
+                    .val(item.旅館名稱)
+                    .html(item.旅館名稱)
+                    .prependTo("#start");
+
+                // $("#start").append(product);
+
+            }
+        })
+        $.ajax({
+            url: "http://opendata.hccg.gov.tw/dataset/7ea7e303-df62-4fbe-a84f-99bdd724b577/resource/c15a9c5f-f6cb-4da5-b8a6-5e7bc4c9eb08/download/20180501160733080.json",
+            type: "GET",
+        }).done(function(data) {
+            for (var item of data) {
+
+
+                var marker = new google.maps.Marker({
+                    position: {
+                        lat: parseFloat(item.緯度),
+                        lng: parseFloat(item.經度)
+                    },
+                    map: map,
+                    icon: "http://icons.iconarchive.com/icons/etherbrian/bit-eat/16/Meat-icon.png",
+                    title: item.古蹟名稱
+                });
+                $("<option></option>")
+                    .val(item.古蹟名稱)
+                    .html(item.古蹟名稱)
+                    .prependTo("#end");
+            }
+        });
+    }
+</script>
+
+</html>
